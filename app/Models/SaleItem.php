@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class SaleItem extends Model
 {
-    
+    public $timestamps = false;
+
     protected $fillable = [
-        'sale_id','product_id','price','quantity','total'
+        'sale_id', 'product_id', 'price', 'quantity', 'total',
     ];
 
     public function sale()
@@ -20,5 +21,4 @@ class SaleItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
-
 }
