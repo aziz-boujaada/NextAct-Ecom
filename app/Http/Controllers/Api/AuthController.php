@@ -3,45 +3,37 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Loginrequest;
+use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * REGISTER
-     */
     public function register(RegisterRequest $request)
     {
         $data = $request->validated();
 
-        // IMPORTANT: hash password
         $data['password'] = Hash::make($data['password']);
+        $data['role'] = User::ROLE_EMPLOYEE;
 
         $user = User::create($data);
-
-      
 
         return response()->json([
             'status' => 'success',
             'message' => 'Account created successfully',
             'user' => $user,
-           
+            'authorization' => $this->tokenPayload(auth('api')->login($user)),
         ], 201);
     }
 
-    /**
-     * LOGIN
-     */
-    public function login(Loginrequest $request)
+    public function login(LoginRequest $request)
     {
         $credentials = $request->only('email', 'password');
 
-        if (!Auth::attempt($credentials)) {
+        if (! $token = auth('api')->attempt($credentials)) {
             return response()->json([
                 'status' => 'failed',
                 'message' => 'Email or password incorrect',
@@ -52,44 +44,67 @@ class AuthController extends Controller
             'status' => 'success',
             'message' => 'Login successful',
             'user' => auth('api')->user(),
-            // 'token' => $token,
-            'token_type' => 'bearer'
+            'authorization' => $this->tokenPayload($token),
         ]);
     }
 
-    /**
-     * LOGOUT
-     */
     public function logout()
     {
         auth('api')->logout();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Logged out successfully'
+            'message' => 'Logged out successfully',
         ]);
     }
 
-    /**
-     * CURRENT USER
-     */
     public function me()
     {
         return response()->json([
             'status' => 'success',
-            'user' => auth('api')->user()
+            'user' => auth('api')->user(),
         ]);
     }
 
-    /**
-     * REFRESH TOKEN
-     */
+    public function updateProfile(UpdateProfileRequest $request)
+    {
+        $user = auth('api')->user();
+        $user->fill($request->validated());
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh(),
+        ]);
+    }
+
+    public function resetPassword(ResetPasswordRequest $request)
+    {
+        $user = auth('api')->user();
+        $user->password = Hash::make($request->validated('password'));
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Password updated successfully',
+        ]);
+    }
+
     public function refresh()
     {
         return response()->json([
             'status' => 'success',
-            'token' => auth('api')->refresh(),
-            'token_type' => 'bearer'
+            'authorization' => $this->tokenPayload(auth('api')->refresh()),
         ]);
+    }
+
+    private function tokenPayload(string $token): array
+    {
+        return [
+            'token' => $token,
+            'type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+        ];
     }
 }
