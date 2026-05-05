@@ -7,6 +7,7 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Services\ProductImageService;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -23,14 +24,21 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         $data = $request->validated();
-
+        $data['reference'] = 'Ref-' . Str::uuid(); 
         if ($request->hasFile('image')) {
             $data['image_path'] = $this->productImageService->store($request->file('image'));
         }
 
         unset($data['image']);
 
-        $product = Product::create($data)->load(['category', 'supplier']);
+        
+        if($data['stock'] < $data['min_stock']){
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'stock must be greater than min stock '
+            ],422);
+        }
+        $product = Product::create($data )->load(['category', 'supplier']);
 
         return response()->json([
             'status' => 'success',

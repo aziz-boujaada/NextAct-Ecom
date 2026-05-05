@@ -14,7 +14,7 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reference' => ['required', 'string', 'max:255', 'unique:products,reference'],
+            'reference' => ['nullable', 'string', 'max:255', 'unique:products,reference'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'max:2048'],
