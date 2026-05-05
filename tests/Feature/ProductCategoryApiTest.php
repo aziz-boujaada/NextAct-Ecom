@@ -182,6 +182,34 @@ test('product references must be unique', function () {
         ->assertJsonValidationErrors(['reference']);
 });
 
+test('products can be filtered by supplier', function () {
+    $category = Category::create(['name' => 'Supplier Filter Category']);
+    $supplier = Supplier::create(['name' => 'Included Supplier']);
+    $otherSupplier = Supplier::create(['name' => 'Excluded Supplier']);
+    $includedProduct = Product::create([
+        'reference' => 'SKU-005',
+        'name' => 'Included Product',
+        'price' => 49.90,
+        'category_id' => $category->id,
+        'supplier_id' => $supplier->id,
+    ]);
+    Product::create([
+        'reference' => 'SKU-006',
+        'name' => 'Excluded Product',
+        'price' => 59.90,
+        'category_id' => $category->id,
+        'supplier_id' => $otherSupplier->id,
+    ]);
+
+    $this
+        ->withHeaders($this->headers)
+        ->getJson("/api/products?supplier_id={$supplier->id}")
+        ->assertOk()
+        ->assertJsonCount(1, 'products')
+        ->assertJsonPath('products.0.id', $includedProduct->id)
+        ->assertJsonPath('products.0.supplier.id', $supplier->id);
+});
+
 test('product and category api routes require authentication', function () {
     $category = Category::create(['name' => 'Guest Category']);
     $supplier = Supplier::create(['name' => 'Guest Supplier']);

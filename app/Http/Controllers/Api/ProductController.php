@@ -7,17 +7,25 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Services\ProductImageService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
     public function __construct(private readonly ProductImageService $productImageService) {}
 
-    public function index()
+    public function index(Request $request)
     {
+        $filters = $request->validate([
+            'supplier_id' => ['sometimes', 'integer', 'exists:suppliers,id'],
+        ]);
+
         return response()->json([
             'status' => 'success',
-            'products' => Product::with(['category', 'supplier'])->latest()->get(),
+            'products' => Product::with(['category', 'supplier'])
+                ->when(isset($filters['supplier_id']), fn ($query) => $query->where('supplier_id', $filters['supplier_id']))
+                ->latest()
+                ->get(),
         ]);
     }
 

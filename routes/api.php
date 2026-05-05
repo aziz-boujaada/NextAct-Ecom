@@ -4,6 +4,10 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PurchaseController;
+use App\Http\Controllers\Api\PurchaseItemController;
+use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\SaleItemController;
 use App\Http\Controllers\Api\SupplierController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,9 +24,11 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('clients', ClientController::class);
     Route::apiResource('products', ProductController::class);
+    Route::apiResource('purchases', PurchaseController::class);
+    Route::apiResource('purchase-items', PurchaseItemController::class);
+    Route::apiResource('sales', SaleController::class);
+    Route::apiResource('sale-items', SaleItemController::class);
     Route::apiResource('suppliers', SupplierController::class);
 });
 
-Route::get('/ping', function () {
-    return 'API is working';
-});
+
