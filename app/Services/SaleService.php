@@ -12,10 +12,12 @@ class SaleService
 
     public function create(array $data): Sale
     {
-        return DB::transaction(function () use ($data) {
+        $reference = 'SALE-' . Str::random(6);
+        return DB::transaction(function () use ($data, $reference) {
             $sale = Sale::create([
                 ...$data,
                 'total' => 0,
+                'reference' => $reference
             ]);
 
             return $sale->fresh(['client', 'items.product', 'refunds.items.product']);
