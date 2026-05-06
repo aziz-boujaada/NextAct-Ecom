@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\PurchaseItemController;
+use App\Http\Controllers\Api\RefundController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\SaleItemController;
 use App\Http\Controllers\Api\SupplierController;
@@ -28,7 +29,6 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('purchase-items', PurchaseItemController::class);
     Route::apiResource('sales', SaleController::class);
     Route::apiResource('sale-items', SaleItemController::class);
+    Route::apiResource('refunds', RefundController::class)->only(['index', 'store', 'show', 'destroy']);
     Route::apiResource('suppliers', SupplierController::class);
 });
-
-

@@ -3,13 +3,15 @@
 namespace App\Services;
 
 use App\Models\Product;
-use App\Models\Sale;
 use App\Models\SaleItem;
 use Illuminate\Support\Facades\DB;
 
 class SaleItemService
 {
-    public function __construct(private readonly StockService $stockService) {}
+    public function __construct(
+        private readonly StockService $stockService,
+        private readonly SaleService $saleService
+    ) {}
 
     public function create(array $data): SaleItem
     {
@@ -22,7 +24,7 @@ class SaleItemService
             $saleItem = SaleItem::create($data);
 
             $this->stockService->move($product, $saleItem->quantity, 'out', 'sale', $saleItem->id);
-            $this->refreshSaleTotal($saleItem->sale);
+            $this->saleService->refreshTotal($saleItem->sale);
 
             return $saleItem->fresh(['sale.client', 'product']);
         });
@@ -46,10 +48,10 @@ class SaleItemService
 
             $saleItem = $saleItem->fresh(['sale.client', 'product']);
 
-            $this->refreshSaleTotal($oldSale);
+            $this->saleService->refreshTotal($oldSale);
 
             if ($oldSale->isNot($saleItem->sale)) {
-                $this->refreshSaleTotal($saleItem->sale);
+                $this->saleService->refreshTotal($saleItem->sale);
             }
 
             return $saleItem;
@@ -67,15 +69,8 @@ class SaleItemService
             $saleItem->delete();
 
             $this->stockService->move($product, $quantity, 'in', 'sale', $referenceId);
-            $this->refreshSaleTotal($sale);
+            $this->saleService->refreshTotal($sale);
         });
-    }
-
-    private function refreshSaleTotal(Sale $sale): void
-    {
-        $sale->update([
-            'total' => $sale->items()->sum('total'),
-        ]);
     }
 
     private function syncStock(

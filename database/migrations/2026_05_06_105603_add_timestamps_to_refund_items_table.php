@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('refunds', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('sale_id')->constrained()->cascadeOnDelete();
-            $table->decimal('total', 10, 2)->default(0);
-            $table->text('reason')->nullable();
-            $table->timestamps();
+        Schema::table('refund_items', function (Blueprint $table) {
+            $table->timestamps()->after('total');
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('refunds');
+        Schema::table('refund_items', function (Blueprint $table) {
+            //
+        });
     }
 };

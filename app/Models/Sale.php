@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sale extends Model
 {
-    protected $fillable = ['client_id', 'total', 'status'];
+    protected $fillable = ['reference', 'client_id', 'total', 'status'];
+
+    protected $casts = [
+        'total' => 'decimal:2',
+    ];
 
     public function client()
     {
@@ -23,9 +27,9 @@ class Sale extends Model
         return $this->hasOne(Invoice::class);
     }
 
-    public function refund()
+    public function refunds()
     {
-        return $this->hasOne(Refund::class);
+        return $this->hasMany(Refund::class);
     }
 
     public function payments()

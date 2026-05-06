@@ -9,7 +9,11 @@ class Refund extends Model
     protected $fillable = [
         'sale_id',
         'total',
-        'reason'
+        'reason',
+    ];
+
+    protected $casts = [
+        'total' => 'decimal:2',
     ];
 
     public function sale()

@@ -12,6 +12,11 @@ class SaleItem extends Model
         'sale_id', 'product_id', 'price', 'quantity', 'total',
     ];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+        'total' => 'decimal:2',
+    ];
+
     public function sale()
     {
         return $this->belongsTo(Sale::class);

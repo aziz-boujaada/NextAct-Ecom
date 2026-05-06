@@ -16,6 +16,7 @@ class StoreSaleRequest extends FormRequest
     {
         return [
             'client_id' => ['required', 'integer', 'exists:clients,id'],
+            'reference' => ['prohibited'],
             'total' => ['prohibited'],
             'status' => ['sometimes', 'string', Rule::in(['paid', 'unpaid', 'refunded'])],
         ];

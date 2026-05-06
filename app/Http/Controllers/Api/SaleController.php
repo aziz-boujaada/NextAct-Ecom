@@ -6,26 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSaleRequest;
 use App\Http\Requests\UpdateSaleRequest;
 use App\Models\Sale;
-use App\Services\SaleItemService;
+use App\Services\SaleService;
 
 class SaleController extends Controller
 {
-    public function __construct(private readonly SaleItemService $saleItemService) {}
+    public function __construct(private readonly SaleService $saleService) {}
 
     public function index()
     {
         return response()->json([
             'status' => 'success',
-            'sales' => Sale::with(['client', 'items.product'])->latest()->get(),
+            'sales' => Sale::with(['client', 'items.product', 'refunds.items.product'])->latest()->get(),
         ]);
     }
 
     public function store(StoreSaleRequest $request)
     {
-        $data = $request->validated();
-        $data['total'] = 0;
-
-        $sale = Sale::create($data)->load(['client', 'items.product']);
+        $sale = $this->saleService->create($request->validated());
 
         return response()->json([
             'status' => 'success',
@@ -38,30 +35,24 @@ class SaleController extends Controller
     {
         return response()->json([
             'status' => 'success',
-            'sale' => $sale->load(['client', 'items.product']),
+            'sale' => $sale->load(['client', 'items.product', 'refunds.items.product']),
         ]);
     }
 
     public function update(UpdateSaleRequest $request, Sale $sale)
     {
-        $sale->update($request->validated());
+        $sale = $this->saleService->update($sale, $request->validated());
 
         return response()->json([
             'status' => 'success',
             'message' => 'Sale updated successfully',
-            'sale' => $sale->fresh()->load(['client', 'items.product']),
+            'sale' => $sale,
         ]);
     }
 
     public function destroy(Sale $sale)
     {
-        $sale->load('items.product');
-
-        foreach ($sale->items as $saleItem) {
-            $this->saleItemService->delete($saleItem);
-        }
-
-        $sale->delete();
+        $this->saleService->delete($sale);
 
         return response()->json([
             'status' => 'success',
