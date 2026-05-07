@@ -6,9 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseRequest;
 use App\Http\Requests\UpdatePurchaseRequest;
 use App\Models\Purchase;
+use App\Models\PurchaseItem;
+use App\Services\PurchaseItemService;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseController extends Controller
 {
+
+private PurchaseItemService $purchaseItemService ;
+public function __construct(PurchaseItemService $purchaseItemService)
+{
+    $this->purchaseItemService = $purchaseItemService ;
+}
     public function index()
     {
         return response()->json([
@@ -19,7 +28,41 @@ class PurchaseController extends Controller
 
     public function store(StorePurchaseRequest $request)
     {
-        $purchase = Purchase::create($request->validated())->load(['supplier', 'items.product']);
+        $validated = $request->validated();
+        $items = $validated['items'] ?? [];
+        
+        // Extract only purchase data (supplier_id and status)
+        $purchaseData = [
+            'supplier_id' => $validated['supplier_id'],
+            'status' => $validated['status'] ?? 'pending',
+        ];
+
+        $purchase = DB::transaction(function () use ($purchaseData, $items) {
+            // Step 1: Create the purchase
+            $purchase = Purchase::create($purchaseData);
+
+            // Step 2: Create items if provided
+            if (!empty($items)) {
+                foreach ($items as $itemData) {
+                    $product = $this->purchaseItemService->productForPurchase($purchase->id, $itemData['product_id']);
+
+                    $purchaseItem = PurchaseItem::create([
+                        'purchase_id' => $purchase->id,
+                        'product_id' => $itemData['product_id'],
+                        'quantity' => $itemData['quantity'],
+                        'price' => $product->price,
+                        'total' => $product->price * $itemData['quantity'],
+                    ]);
+
+                    $this->purchaseItemService->applyStockMovement($product, $purchaseItem->quantity, 'in', $purchaseItem->id);
+                }
+                
+            
+                $this->purchaseItemService->refreshPurchaseTotal($purchase);
+            }
+
+            return $purchase->load(['supplier', 'items.product']);
+        });
 
         return response()->json([
             'status' => 'success',

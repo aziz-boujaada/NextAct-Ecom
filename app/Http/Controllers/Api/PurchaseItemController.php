@@ -9,40 +9,24 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\StockMovement;
+use App\Services\PurchaseItemService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PurchaseItemController extends Controller
 {
+
+private PurchaseItemService $purchaseItemService;
+public function __construct(PurchaseItemService $purchaseItemService)
+{
+  $this->purchaseItemService = $purchaseItemService ;
+}
     public function index()
     {
         return response()->json([
             'status' => 'success',
             'purchase_items' => PurchaseItem::with(['purchase.supplier', 'product'])->latest()->get(),
         ]);
-    }
-
-    public function store(StorePurchaseItemRequest $request)
-    {
-        $purchaseItem = DB::transaction(function () use ($request) {
-            $data = $request->validated();
-            $product = $this->productForPurchase($data['purchase_id'], $data['product_id']);
-
-            $data['price'] = $product->price;
-            $data['total'] = $data['price'] * $data['quantity'];
-
-            $purchaseItem = PurchaseItem::create($data)->load(['purchase.supplier', 'product']);
-            $this->applyStockMovement($product, $purchaseItem->quantity, 'in', $purchaseItem->id);
-            $this->refreshPurchaseTotal($purchaseItem->purchase);
-
-            return $purchaseItem;
-        });
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Purchase item created successfully',
-            'purchase_item' => $purchaseItem->fresh()->load(['purchase.supplier', 'product']),
-        ], 201);
     }
 
     public function show(PurchaseItem $purchaseItem)
@@ -63,7 +47,7 @@ class PurchaseItemController extends Controller
 
             $purchaseId = $data['purchase_id'] ?? $purchaseItem->purchase_id;
             $productId = $data['product_id'] ?? $purchaseItem->product_id;
-            $product = $this->productForPurchase($purchaseId, $productId);
+            $product = $this->purchaseItemService->productForPurchase($purchaseId, $productId);
 
             $data['price'] = $product->price;
             $price = $data['price'];
@@ -74,10 +58,10 @@ class PurchaseItemController extends Controller
             $this->syncUpdatedItemStock($oldProduct, $product, $oldQuantity, $quantity, $purchaseItem->id);
             $purchaseItem = $purchaseItem->fresh(['purchase.supplier', 'product']);
 
-            $this->refreshPurchaseTotal($oldPurchase);
+            $this->purchaseItemService->refreshPurchaseTotal($oldPurchase);
 
             if ($oldPurchase->isNot($purchaseItem->purchase)) {
-                $this->refreshPurchaseTotal($purchaseItem->purchase);
+                $this->purchaseItemService->refreshPurchaseTotal($purchaseItem->purchase);
             }
 
             return $purchaseItem;
@@ -99,8 +83,8 @@ class PurchaseItemController extends Controller
             $referenceId = $purchaseItem->id;
 
             $purchaseItem->delete();
-            $this->applyStockMovement($product, $quantity, 'out', $referenceId);
-            $this->refreshPurchaseTotal($purchase);
+            $this->purchaseItemService->applyStockMovement($product, $quantity, 'out', $referenceId);
+            $this->purchaseItemService->refreshPurchaseTotal($purchase);
         });
 
         return response()->json([
@@ -109,26 +93,9 @@ class PurchaseItemController extends Controller
         ]);
     }
 
-    private function refreshPurchaseTotal(Purchase $purchase): void
-    {
-        $purchase->update([
-            'total' => $purchase->items()->sum('total'),
-        ]);
-    }
+  
 
-    private function productForPurchase(int $purchaseId, int $productId): Product
-    {
-        $purchase = Purchase::findOrFail($purchaseId);
-        $product = Product::findOrFail($productId);
 
-        if ((int) $product->supplier_id !== (int) $purchase->supplier_id) {
-            throw ValidationException::withMessages([
-                'product_id' => ['The selected product does not belong to the purchase supplier.'],
-            ]);
-        }
-
-        return $product;
-    }
 
     private function syncUpdatedItemStock(
         Product $oldProduct,
@@ -138,8 +105,8 @@ class PurchaseItemController extends Controller
         int $purchaseItemId
     ): void {
         if ($oldProduct->isNot($newProduct)) {
-            $this->applyStockMovement($oldProduct, $oldQuantity, 'out', $purchaseItemId);
-            $this->applyStockMovement($newProduct, $newQuantity, 'in', $purchaseItemId);
+            $this->purchaseItemService->applyStockMovement($oldProduct, $oldQuantity, 'out', $purchaseItemId);
+            $this->purchaseItemService->applyStockMovement($newProduct, $newQuantity, 'in', $purchaseItemId);
 
             return;
         }
@@ -147,30 +114,13 @@ class PurchaseItemController extends Controller
         $difference = $newQuantity - $oldQuantity;
 
         if ($difference > 0) {
-            $this->applyStockMovement($newProduct, $difference, 'in', $purchaseItemId);
+            $this->purchaseItemService->applyStockMovement($newProduct, $difference, 'in', $purchaseItemId);
         }
 
         if ($difference < 0) {
-            $this->applyStockMovement($newProduct, abs($difference), 'out', $purchaseItemId);
+            $this->purchaseItemService->applyStockMovement($newProduct, abs($difference), 'out', $purchaseItemId);
         }
     }
 
-    private function applyStockMovement(Product $product, int $quantity, string $type, int $purchaseItemId): void
-    {
-        $product = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
-
-        if ($type === 'in') {
-            $product->increment('stock', $quantity);
-        } else {
-            $product->decrement('stock', $quantity);
-        }
-
-        StockMovement::create([
-            'product_id' => $product->id,
-            'quantity' => $quantity,
-            'type' => $type,
-            'source' => 'purchase',
-            'reference_id' => $purchaseItemId,
-        ]);
-    }
+    
 }
