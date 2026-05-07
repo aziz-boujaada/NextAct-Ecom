@@ -85,6 +85,28 @@ test('a user can update their profile', function () {
         ->assertJsonPath('user.email', 'updated@example.com');
 });
 
+test('a user can update their role in their profile', function () {
+    User::factory()->create([
+        'email' => 'role-profile@example.com',
+        'password' => Hash::make('password1'),
+        'role' => User::ROLE_EMPLOYEE,
+    ]);
+
+    $token = $this->postJson('/api/login', [
+        'email' => 'role-profile@example.com',
+        'password' => 'password1',
+    ])->json('authorization.token');
+
+    $this
+        ->withHeader('Authorization', "Bearer {$token}")
+        ->putJson('/api/profile', [
+            'role' => User::ROLE_ADMIN,
+        ])
+        ->assertOk()
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('user.role', User::ROLE_ADMIN);
+});
+
 test('a user can reset their password', function () {
     User::factory()->create([
         'email' => 'password@example.com',
