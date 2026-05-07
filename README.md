@@ -99,7 +99,7 @@ php artisan migrate
 ### Start server
 
 ```bash
-php artisan serve
+npm run dev
 ```
 
 Server runs on:
@@ -107,6 +107,8 @@ Server runs on:
 ```bash
 http://127.0.0.1:8000
 ```
+
+Vite assets run alongside it on `http://127.0.0.1:5174`.
 
 ---
 
