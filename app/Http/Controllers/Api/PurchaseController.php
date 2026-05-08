@@ -31,17 +31,17 @@ public function __construct(PurchaseItemService $purchaseItemService)
         $validated = $request->validated();
         $items = $validated['items'] ?? [];
         
-        // Extract only purchase data (supplier_id and status)
+        
         $purchaseData = [
             'supplier_id' => $validated['supplier_id'],
             'status' => $validated['status'] ?? 'pending',
         ];
 
         $purchase = DB::transaction(function () use ($purchaseData, $items) {
-            // Step 1: Create the purchase
+            
             $purchase = Purchase::create($purchaseData);
 
-            // Step 2: Create items if provided
+            
             if (!empty($items)) {
                 foreach ($items as $itemData) {
                     $product = $this->purchaseItemService->productForPurchase($purchase->id, $itemData['product_id']);

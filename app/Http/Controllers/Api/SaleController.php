@@ -7,10 +7,13 @@ use App\Http\Requests\StoreSaleRequest;
 use App\Http\Requests\UpdateSaleRequest;
 use App\Models\Sale;
 use App\Services\SaleService;
+use App\Services\SaleItemService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SaleController extends Controller
 {
-    public function __construct(private readonly SaleService $saleService) {}
+    public function __construct(private readonly SaleService $saleService, private readonly SaleItemService $saleItemService) {}
 
     public function index()
     {
@@ -22,7 +25,31 @@ class SaleController extends Controller
 
     public function store(StoreSaleRequest $request)
     {
-        $sale = $this->saleService->create($request->validated());
+        $validated = $request->validated();
+        $items = $validated['items'] ?? [];
+
+        $saleData = [
+            'client_id' => $validated['client_id'],
+            'status' => $validated['status'] ?? 'unpaid',
+        ];
+
+        $reference = 'SALE-' . Str::random(6);
+
+        $sale = DB::transaction(function () use ($saleData, $items, $reference) {
+            $sale = Sale::create([
+                ...$saleData,
+                'total' => 0,
+                'reference' => $reference,
+            ]);
+
+            if (!empty($items)) {
+                foreach ($items as $itemData) {
+                    $this->saleItemService->create(array_merge($itemData, ['sale_id' => $sale->id]));
+                }
+            }
+
+            return $sale->fresh(['client', 'items.product', 'refunds.items.product']);
+        });
 
         return response()->json([
             'status' => 'success',

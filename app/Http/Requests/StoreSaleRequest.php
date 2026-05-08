@@ -19,6 +19,9 @@ class StoreSaleRequest extends FormRequest
             'reference' => ['prohibited'],
             'total' => ['prohibited'],
             'status' => ['sometimes', 'string', Rule::in(['paid', 'unpaid', 'refunded'])],
+            'items' => ['nullable', 'array'],
+            'items.*.product_id' => ['required_with:items', 'integer', 'exists:products,id'],
+            'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
         ];
     }
 }
