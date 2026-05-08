@@ -34,6 +34,6 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('sales', SaleController::class);
     Route::apiResource('sale-items', SaleItemController::class);
     Route::apiResource('stock-movements', StockmovmentController::class)->only(['index']);
-    Route::apiResource('refunds', RefundController::class)->only(['index', 'store', 'show', 'destroy']);
+    Route::apiResource('refunds', RefundController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::apiResource('suppliers', SupplierController::class);
 });

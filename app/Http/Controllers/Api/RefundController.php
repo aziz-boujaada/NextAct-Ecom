@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRefundRequest;
+use App\Http\Requests\UpdateRefundRequest;
 use App\Models\Refund;
 use App\Services\RefundService;
 
@@ -35,6 +36,17 @@ class RefundController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $refund->load(['sale.client', 'items.product']),
+        ]);
+    }
+
+    public function update(UpdateRefundRequest $request, Refund $refund)
+    {
+        $refund = $this->refundService->update($refund, $request->validated());
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Refund updated successfully',
+            'data' => $refund,
         ]);
     }
 

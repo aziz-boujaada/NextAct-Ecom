@@ -71,6 +71,72 @@ class RefundService
         });
     }
 
+    public function update(Refund $refund, array $data): Refund
+    {
+        return DB::transaction(function () use ($refund, $data) {
+            $refund = Refund::with(['items.product', 'sale.items.product'])->lockForUpdate()->findOrFail($refund->id);
+            $sale = $refund->sale;
+
+            if (array_key_exists('reason', $data)) {
+                $refund->update([
+                    'reason' => $data['reason'],
+                ]);
+            }
+
+            if (array_key_exists('items', $data)) {
+                foreach ($refund->items as $existingItem) {
+                    $this->stockService->move($existingItem->product, $existingItem->quantity, 'out', 'refund', $existingItem->id);
+                }
+
+                $refund->items()->delete();
+
+                foreach ($data['items'] as $item) {
+                    $saleItem = $sale->items->firstWhere('product_id', $item['product_id']);
+
+                    if (! $saleItem) {
+                        throw ValidationException::withMessages([
+                            'items' => ['The selected product was not sold in this sale.'],
+                        ]);
+                    }
+
+                    $alreadyRefunded = RefundItem::query()
+                        ->where('product_id', $item['product_id'])
+                        ->where('refund_id', '!=', $refund->id)
+                        ->whereHas('refund', function ($query) use ($sale) {
+                            $query->where('sale_id', $sale->id);
+                        })
+                        ->sum('quantity');
+
+                    $availableToRefund = $saleItem->quantity - $alreadyRefunded;
+
+                    if ($item['quantity'] > $availableToRefund) {
+                        throw ValidationException::withMessages([
+                            'items' => ["The refunded quantity for product {$item['product_id']} exceeds the sold quantity."],
+                        ]);
+                    }
+
+                    $refundItem = RefundItem::create([
+                        'refund_id' => $refund->id,
+                        'product_id' => $saleItem->product_id,
+                        'price' => $saleItem->price,
+                        'quantity' => $item['quantity'],
+                        'total' => $saleItem->price * $item['quantity'],
+                    ]);
+
+                    $this->stockService->move($saleItem->product, $refundItem->quantity, 'in', 'refund', $refundItem->id);
+                }
+            }
+
+            $refund->update([
+                'total' => $refund->items()->sum('total'),
+            ]);
+
+            $this->saleService->refreshTotal($sale);
+
+            return $refund->fresh(['sale.client', 'items.product']);
+        });
+    }
+
     public function delete(Refund $refund): void
     {
         DB::transaction(function () use ($refund) {
