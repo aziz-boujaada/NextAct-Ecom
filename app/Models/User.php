@@ -15,6 +15,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements JWTSubject
 {
+
+
     protected $fillable = ['name', 'email', 'password', 'role'];
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -44,5 +46,27 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTIdentifier()
     {
         return $this->getKey();
+    }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'user_permission');
+    }
+
+    public function hasPermission($permissionName)
+    {
+        return $this->permissions()->where('name', $permissionName)->exists();
+    }
+
+    public function hasAnyPermission($permissions)
+    {
+        return $this->permissions()->whereIn('name', (array) $permissions)->exists();
+    }
+
+    public function hasAllPermissions($permissions)
+    {
+        return collect($permissions)->every(function ($permission) {
+            return $this->hasPermission($permission);
+        });
     }
 }
