@@ -9,7 +9,11 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_number',
         'sale_id',
-        'total'
+        'total',
+    ];
+
+    protected $casts = [
+        'total' => 'decimal:2',
     ];
 
     public function sale()
