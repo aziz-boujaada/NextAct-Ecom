@@ -48,25 +48,56 @@ class User extends Authenticatable implements JWTSubject
         return $this->getKey();
     }
 
+public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'user_permission');
     }
 
-    public function hasPermission($permissionName)
+    public function hasPermission(string $permission): bool
     {
-        return $this->permissions()->where('name', $permissionName)->exists();
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->permissions->contains('name', $permission);
     }
 
-    public function hasAnyPermission($permissions)
+    public function hasAnyPermission($permissions): bool
     {
-        return $this->permissions()->whereIn('name', (array) $permissions)->exists();
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $permissions = (array) $permissions;
+
+        return $this->permissions
+            ->pluck('name')
+            ->intersect($permissions)
+            ->isNotEmpty();
     }
 
-    public function hasAllPermissions($permissions)
+    public function hasAllPermissions($permissions): bool
     {
-        return collect($permissions)->every(function ($permission) {
-            return $this->hasPermission($permission);
-        });
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $permissions = (array) $permissions;
+
+        return collect($permissions)->every(
+            fn ($permission) => $this->permissions->contains('name', $permission)
+        );
+    }
+
+    public function giveAllPermissions(): void
+    {
+        $this->permissions()->sync(
+            Permission::all()->pluck('id')
+        );
     }
 }
