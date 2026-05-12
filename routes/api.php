@@ -39,19 +39,6 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('stock-movements', StockmovmentController::class)->only(['index']);
     Route::apiResource('refunds', RefundController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::apiResource('suppliers', SupplierController::class);
-
-    Route::get('/suppliers', [SupplierController::class, 'index'])
-        ->middleware('permissions:view_suppliers');
-
-    Route::post('/suppliers', [SupplierController::class, 'store'])
-        ->middleware('permissions:create_suppliers');
-
-    Route::put('/suppliers/{id}', [SupplierController::class, 'update'])
-        ->middleware('permissions:edit_suppliers');
-
-    Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])
-        ->middleware('permissions:delete_suppliers');
-
     Route::post('/invoices/{id}/generate', [InvoiceController::class, 'generateInvoice'])->name('invoice');
     // });
 
@@ -61,8 +48,3 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/permissions', [UserController::class, 'getAvailablePermissions'])->name('permissions.index');
     });
 });
-
-
-
-/// Too few arguments to function App\Http\Middleware\PermissionsMiddleware::handle(), 2 passed in
-// /home/aziz/Documents/NextAct-Ecom/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php on line 219 and exactly 3 expected

@@ -9,6 +9,18 @@ use App\Models\Supplier;
 
 class SupplierController extends Controller
 {
+
+public function __construct()
+{
+    $this->middleware('permissions:view_suppliers')->only(['index', 'show']);
+
+    $this->middleware('permissions:create_suppliers')->only(['store']);
+
+    $this->middleware('permissions:edit_suppliers')->only(['update']);
+
+    $this->middleware('permissions:delete_suppliers')->only(['destroy']);
+
+}
     public function index()
     {
         return response()->json([
@@ -36,8 +48,9 @@ class SupplierController extends Controller
         ]);
     }
 
-    public function update(UpdateSupplierRequest $request, Supplier $supplier)
+    public function update(UpdateSupplierRequest $request, string $id)
     {
+        $supplier = Supplier::findOrFail($id);
         $supplier->update($request->validated());
 
         return response()->json([
