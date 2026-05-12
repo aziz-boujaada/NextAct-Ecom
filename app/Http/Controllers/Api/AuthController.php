@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -58,11 +59,13 @@ class AuthController extends Controller
         ]);
     }
 
-    public function me()
+    public function me(Request $request)
     {
+        $user = User::with('permissions')->find($request->user()->id);
+
         return response()->json([
-            'status' => 'success',
-            'user' => auth('api')->user(),
+            'user' => $user,
+            'permissions' => $user->permissions->pluck('name')
         ]);
     }
 
