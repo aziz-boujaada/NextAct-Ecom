@@ -9,6 +9,11 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
+
+  public function __construct()
+  {
+    $this->middleware('permissions:generate_invoices')->only(['generateInvoice']);
+  }
   public function generateInvoice($id)
   {
     $sale = Sale::with(['client', 'items.product', 'invoice'])->findOrFail($id);
@@ -32,5 +37,5 @@ class InvoiceController extends Controller
       'Content-Type' => 'application/pdf',
       'Content-Disposition' => 'inline; filename="' . $invoice->invoice_number . '.pdf"',
     ]);
-    }
+  }
 }

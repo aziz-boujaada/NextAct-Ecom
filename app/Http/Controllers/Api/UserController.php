@@ -13,6 +13,19 @@ use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permissions:view_users')->only(['index', 'show']);
+
+        $this->middleware('permissions:create_users')->only(['store']);
+
+        $this->middleware('permissions:edit_users')->only(['update']);
+
+        $this->middleware('permissions:delete_users')->only(['destroy']);
+
+        $this->middleware('permissions:manage_permissions')->only(['assignPermissions']);
+    }
     /**
      * Display a listing of the resource.
      */
@@ -76,13 +89,13 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-      $authUser = Auth::user();
+        $authUser = Auth::user();
 
-    if ($authUser->role !== 'admin') {
-        return response()->json([
-            'message' => 'Unauthorized',
-        ], 403);
-    }
+        if ($authUser->role !== 'admin') {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], 403);
+        }
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',

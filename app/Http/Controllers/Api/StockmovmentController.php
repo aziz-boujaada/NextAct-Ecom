@@ -11,6 +11,10 @@ class StockmovmentController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function __construct()
+{
+    $this->middleware('permissions:manage_stock')->only(['index']);
+}
     public function index()
     {
         $stockHstory = StockMovement::with('product')->latest()->paginate(8);

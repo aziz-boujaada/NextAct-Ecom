@@ -13,7 +13,16 @@ use Illuminate\Support\Str;
 
 class SaleController extends Controller
 {
-    public function __construct(private readonly SaleService $saleService, private readonly SaleItemService $saleItemService) {}
+    public function __construct(private readonly SaleService $saleService, private readonly SaleItemService $saleItemService)
+    {
+        $this->middleware('permissions:view_sales')->only(['index', 'show']);
+
+        $this->middleware('permissions:create_sales')->only(['store']);
+
+        $this->middleware('permissions:edit_sales')->only(['update']);
+
+        $this->middleware('permissions:delete_sales')->only(['destroy']);
+    }
 
     public function index()
     {

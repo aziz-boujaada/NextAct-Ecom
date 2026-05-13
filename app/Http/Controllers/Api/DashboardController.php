@@ -8,7 +8,9 @@ use App\Services\DashboardService;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly DashboardService $dashboardService) {}
+    public function __construct(private readonly DashboardService $dashboardService) {
+          $this->middleware('permissions:view_dashboard')->only(['index']);
+    }
 
     public function index()
     {

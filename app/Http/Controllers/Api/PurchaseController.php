@@ -13,11 +13,20 @@ use Illuminate\Support\Facades\DB;
 class PurchaseController extends Controller
 {
 
-private PurchaseItemService $purchaseItemService ;
-public function __construct(PurchaseItemService $purchaseItemService)
-{
-    $this->purchaseItemService = $purchaseItemService ;
-}
+    private PurchaseItemService $purchaseItemService;
+    public function __construct(PurchaseItemService $purchaseItemService)
+    {
+        $this->purchaseItemService = $purchaseItemService;
+
+        // permissions 
+        $this->middleware('permissions:view_purchases')->only(['index', 'show']);
+
+        $this->middleware('permissions:create_purchases')->only(['store']);
+
+        $this->middleware('permissions:edit_purchases')->only(['update']);
+
+        $this->middleware('permissions:delete_purchases')->only(['destroy']);
+    }
     public function index()
     {
         return response()->json([
@@ -30,18 +39,18 @@ public function __construct(PurchaseItemService $purchaseItemService)
     {
         $validated = $request->validated();
         $items = $validated['items'] ?? [];
-        
-        
+
+
         $purchaseData = [
             'supplier_id' => $validated['supplier_id'],
             'status' => $validated['status'] ?? 'pending',
         ];
 
         $purchase = DB::transaction(function () use ($purchaseData, $items) {
-            
+
             $purchase = Purchase::create($purchaseData);
 
-            
+
             if (!empty($items)) {
                 foreach ($items as $itemData) {
                     $product = $this->purchaseItemService->productForPurchase($purchase->id, $itemData['product_id']);
@@ -56,8 +65,8 @@ public function __construct(PurchaseItemService $purchaseItemService)
 
                     $this->purchaseItemService->applyStockMovement($product, $purchaseItem->quantity, 'in', $purchaseItem->id);
                 }
-                
-            
+
+
                 $this->purchaseItemService->refreshPurchaseTotal($purchase);
             }
 

@@ -10,7 +10,16 @@ use App\Services\RefundService;
 
 class RefundController extends Controller
 {
-    public function __construct(private readonly RefundService $refundService) {}
+    public function __construct(private readonly RefundService $refundService)
+    {
+        $this->middleware('permissions:view_refunds')->only(['index', 'show']);
+
+        $this->middleware('permissions:create_refunds')->only(['store']);
+
+        $this->middleware('permissions:edit_refunds')->only(['update']);
+
+        $this->middleware('permissions:delete_sales')->only(['destroy']);
+    }
 
     public function index()
     {
