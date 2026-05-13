@@ -29,6 +29,7 @@ class UpdateProductRequest extends FormRequest
             'price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'stock' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'min_stock' => ['sometimes', 'nullable', 'integer', 'min:0'],
+            'security_stock' => ['nullable', 'integer', 'min:0'],
             'category_id' => ['sometimes', 'required', 'integer', 'exists:categories,id'],
             'supplier_id' => ['sometimes', 'required', 'integer', 'exists:suppliers,id'],
         ];

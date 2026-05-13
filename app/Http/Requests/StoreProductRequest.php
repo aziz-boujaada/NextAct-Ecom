@@ -22,6 +22,7 @@ class StoreProductRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:0'],
             'stock' => ['nullable', 'integer', 'min:0'],
             'min_stock' => ['nullable', 'integer', 'min:0'],
+            'security_stock' => ['nullable', 'integer', 'min:0'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'supplier_id' => ['required', 'integer', 'exists:suppliers,id'],
         ];

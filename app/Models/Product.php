@@ -7,9 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     protected $fillable = [
-        'reference', 'name', 'description', 'image_path',
-        'price', 'stock', 'min_stock',
-        'category_id', 'supplier_id',
+        'reference',
+        'name',
+        'description',
+        'image_path',
+        'price',
+        'stock',
+        'min_stock',
+        'security_stock',
+        'alert_stock',
+        'category_id',
+        'supplier_id',
     ];
 
     public function category()
@@ -40,5 +48,14 @@ class Product extends Model
     public function stockMovements()
     {
         return $this->hasMany(StockMovement::class);
+    }
+
+
+
+    protected static function booted()
+    {
+        static::saving(function($product) {
+            $product->alert_stock = ($product->min_stock ?? 0) + ($product->security_stock ?? 0);
+        });
     }
 }

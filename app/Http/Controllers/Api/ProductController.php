@@ -12,7 +12,16 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly ProductImageService $productImageService) {}
+    public function __construct(private readonly ProductImageService $productImageService)
+    {
+        $this->middleware('permissions:view_products')->only(['index', 'show']);
+
+        $this->middleware('permissions:create_products')->only(['store']);
+
+        $this->middleware('permissions:edit_products')->only(['update']);
+
+        $this->middleware('permissions:delete_products')->only(['destroy']);
+    }
 
     public function index(Request $request)
     {
@@ -23,37 +32,47 @@ class ProductController extends Controller
         return response()->json([
             'status' => 'success',
             'products' => Product::with(['category', 'supplier'])
-                ->when(isset($filters['supplier_id']), fn ($query) => $query->where('supplier_id', $filters['supplier_id']))
+                ->when(isset($filters['supplier_id']), fn($query) => $query->where('supplier_id', $filters['supplier_id']))
                 ->latest()
                 ->get(),
         ]);
     }
 
-    public function store(StoreProductRequest $request)
-    {
-        $data = $request->validated();
-        $data['reference'] = 'Ref-' . Str::uuid(); 
-        if ($request->hasFile('image')) {
-            $data['image_path'] = $this->productImageService->store($request->file('image'));
-        }
+   public function store(StoreProductRequest $request)
+{
+    $data = $request->validated();
 
-        unset($data['image']);
+    $data['reference'] = 'Ref-' . Str::uuid();
 
-        
-        if($data['stock'] < $data['min_stock']){
-            return response()->json([
-                'status' => 'failed',
-                'message' => 'stock must be greater than min stock '
-            ],422);
-        }
-        $product = Product::create($data )->load(['category', 'supplier']);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Product created successfully',
-            'product' => $product,
-        ], 201);
+    if ($request->hasFile('image')) {
+        $data['image_path'] = $this->productImageService
+            ->store($request->file('image'));
     }
+
+    unset($data['image']);
+
+    $stock = $data['stock'] ?? 0;
+    $min_stock = $data['min_stock'] ?? 0;
+    $security_stock = $data['security_stock'] ?? 0;
+
+    if ($stock < $min_stock) {
+        return response()->json([
+            'status' => 'failed',
+            'message' => 'Stock must be greater than min stock'
+        ], 422);
+    }
+ 
+    $data['alert_stock'] = $min_stock + $security_stock;
+    $product = Product::create($data)
+    ->load(['category', 'supplier']);
+    
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Product created successfully',
+        'product' => $product,
+        ], 201);
+      
+}
 
     public function show(Product $product)
     {
