@@ -14,7 +14,8 @@ class DashboardController extends Controller
 
     public function index()
     {
-        abort_if(auth('api')->user()->role !== User::ROLE_ADMIN, 403, 'Only admins can access dashboard statistics.');
+
+        
 
         return response()->json([
             'status' => 'success',
