@@ -81,7 +81,7 @@ class DashboardService
             )
             ->groupBy('products.id', 'products.reference', 'products.name')
             ->orderByDesc('quantity_sold')
-            ->limit(5)
+            ->limit(10)
             ->get()
             ->map(fn ($product) => [
                 'id' => $product->id,

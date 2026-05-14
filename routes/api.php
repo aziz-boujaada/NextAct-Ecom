@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlertsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ClientController;
@@ -43,8 +44,14 @@ Route::middleware('auth:api')->group(function () {
     // });
 
     Route::middleware('is.admin')->group(function () {
-        Route::apiResource('users', UserController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
         Route::post('/users/{id}/permissions', [UserController::class, 'assignPermissions'])->name('users.permissions');
         Route::get('/permissions', [UserController::class, 'getAvailablePermissions'])->name('permissions.index');
-    });
+        Route::apiResource('users', UserController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+        
+        
+        // alerts stock 
+        Route::get('/alerts', [AlertsController::class, 'getAlerts']);
+        Route::put('/alerts/{alert}/read', [AlertsController::class, 'markAsRead']);
+        });
 });
+
