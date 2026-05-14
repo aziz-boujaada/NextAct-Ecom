@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -100,4 +101,12 @@ public function isAdmin(): bool
             Permission::all()->pluck('id')
         );
     }
+
+
+ public function alerts()
+{
+    return $this->belongsToMany(Alert::class)
+        ->withPivot('is_read')
+        ->withTimestamps();
+}
 }
