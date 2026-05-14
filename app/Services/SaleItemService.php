@@ -10,7 +10,8 @@ class SaleItemService
 {
     public function __construct(
         private readonly StockService $stockService,
-        private readonly SaleService $saleService
+        private readonly SaleService $saleService,
+        private AlertsService $alertsService
     ) {}
 
     public function create(array $data): SaleItem
@@ -24,9 +25,11 @@ class SaleItemService
             $saleItem = SaleItem::create($data);
 
             $this->stockService->move($product, $saleItem->quantity, 'out', 'sale', $saleItem->id);
+            $this->alertsService->stockAlert($product->fresh());
             $this->saleService->refreshTotal($saleItem->sale);
 
             return $saleItem->fresh(['sale.client', 'product']);
+
         });
     }
 
@@ -53,6 +56,9 @@ class SaleItemService
             if ($oldSale->isNot($saleItem->sale)) {
                 $this->saleService->refreshTotal($saleItem->sale);
             }
+
+            $this->alertsService->stockAlert($oldProduct->fresh());
+            $this->alertsService->stockAlert($product->fresh());
 
             return $saleItem;
         });

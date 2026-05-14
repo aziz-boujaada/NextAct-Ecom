@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
+use App\Services\AlertsService;
 use App\Services\ProductImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -38,41 +39,40 @@ class ProductController extends Controller
         ]);
     }
 
-   public function store(StoreProductRequest $request)
-{
-    $data = $request->validated();
+    public function store(StoreProductRequest $request)
+    {
+        $data = $request->validated();
 
-    $data['reference'] = 'Ref-' . Str::uuid();
+        $data['reference'] = 'Ref-' . Str::uuid();
 
-    if ($request->hasFile('image')) {
-        $data['image_path'] = $this->productImageService
-            ->store($request->file('image'));
-    }
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $this->productImageService
+                ->store($request->file('image'));
+        }
 
-    unset($data['image']);
+        unset($data['image']);
 
-    $stock = $data['stock'] ?? 0;
-    $min_stock = $data['min_stock'] ?? 0;
-    $security_stock = $data['security_stock'] ?? 0;
+        $stock = $data['stock'] ?? 0;
+        $min_stock = $data['min_stock'] ?? 0;
 
-    if ($stock < $min_stock) {
+
+        if ($stock < $min_stock) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Stock must be greater than min stock'
+            ], 422);
+        }
+
+
+        $product = Product::create($data)
+            ->load(['category', 'supplier']);
+
         return response()->json([
-            'status' => 'failed',
-            'message' => 'Stock must be greater than min stock'
-        ], 422);
-    }
- 
-    $data['alert_stock'] = $min_stock + $security_stock;
-    $product = Product::create($data)
-    ->load(['category', 'supplier']);
-    
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Product created successfully',
-        'product' => $product,
+            'status' => 'success',
+            'message' => 'Product created successfully',
+            'product' => $product,
         ], 201);
-      
-}
+    }
 
     public function show(Product $product)
     {
@@ -82,7 +82,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(UpdateProductRequest $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product, AlertsService $alertsService)
     {
         $data = $request->validated();
 
@@ -95,12 +95,20 @@ class ProductController extends Controller
 
         unset($data['image']);
 
+        $oldStock = $product->stock;
+
         $product->update($data);
+
+        $product = $product->fresh();
+
+        if ($product->stock != $oldStock) {
+            $alertsService->stockAlert($product);
+        }
 
         return response()->json([
             'status' => 'success',
             'message' => 'Product updated successfully',
-            'product' => $product->fresh()->load(['category', 'supplier']),
+            'product' => $product->load(['category', 'supplier']),
         ]);
     }
 

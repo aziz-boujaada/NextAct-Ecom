@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\Alert;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\StockMovement;
 use Illuminate\Validation\ValidationException;
 
-class PurchaseItemService {
+class PurchaseItemService
+{
 
-public function productForPurchase(int $purchaseId, int $productId): Product
+    public function productForPurchase(int $purchaseId, int $productId): Product
     {
         $purchase = Purchase::findOrFail($purchaseId);
         $product = Product::findOrFail($productId);
@@ -22,7 +24,7 @@ public function productForPurchase(int $purchaseId, int $productId): Product
 
         return $product;
     }
-
+    
     public function applyStockMovement(Product $product, int $quantity, string $type, int $purchaseItemId): void
     {
         $product = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
@@ -42,7 +44,7 @@ public function productForPurchase(int $purchaseId, int $productId): Product
         ]);
     }
 
-      public function refreshPurchaseTotal(Purchase $purchase): void
+    public function refreshPurchaseTotal(Purchase $purchase): void
     {
         $purchase->update([
             'total' => $purchase->items()->sum('total'),

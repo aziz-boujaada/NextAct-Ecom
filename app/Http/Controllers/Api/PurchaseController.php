@@ -7,6 +7,7 @@ use App\Http\Requests\StorePurchaseRequest;
 use App\Http\Requests\UpdatePurchaseRequest;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Services\AlertsService;
 use App\Services\PurchaseItemService;
 use Illuminate\Support\Facades\DB;
 
@@ -14,9 +15,12 @@ class PurchaseController extends Controller
 {
 
     private PurchaseItemService $purchaseItemService;
-    public function __construct(PurchaseItemService $purchaseItemService)
+    private AlertsService $alertsService;
+
+    public function __construct(PurchaseItemService $purchaseItemService , AlertsService $alertsService)
     {
         $this->purchaseItemService = $purchaseItemService;
+       $this->alertsService = $alertsService ;
 
         // permissions 
         $this->middleware('permissions:view_purchases')->only(['index', 'show']);
@@ -62,6 +66,7 @@ class PurchaseController extends Controller
                         'price' => $product->price,
                         'total' => $product->price * $itemData['quantity'],
                     ]);
+                    $this->alertsService->handle($product);
 
                     $this->purchaseItemService->applyStockMovement($product, $purchaseItem->quantity, 'in', $purchaseItem->id);
                 }

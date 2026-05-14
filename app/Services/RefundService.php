@@ -12,7 +12,8 @@ class RefundService
 {
     public function __construct(
         private readonly StockService $stockService,
-        private readonly SaleService $saleService
+        private readonly SaleService $saleService ,
+        private readonly AlertsService $alertsService
     ) {}
 
     public function create(array $data): Refund
@@ -59,6 +60,7 @@ class RefundService
                 ]);
 
                 $this->stockService->move($saleItem->product, $refundItem->quantity, 'in', 'refund', $refundItem->id);
+                $this->alertsService->handle($saleItem->product);
             }
 
             $refund->update([
