@@ -43,15 +43,19 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/invoices/{id}/generate', [InvoiceController::class, 'generateInvoice'])->name('invoice');
     // });
 
+    // CSV routes 
+    Route::get('products/export/csv', [ProductController::class, 'exportCsv']);
+    Route::post('products/import/csv', [ProductController::class, 'import']);
+
+
     Route::middleware('is.admin')->group(function () {
         Route::post('/users/{id}/permissions', [UserController::class, 'assignPermissions'])->name('users.permissions');
         Route::get('/permissions', [UserController::class, 'getAvailablePermissions'])->name('permissions.index');
         Route::apiResource('users', UserController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
-        
-        
+
+
         // alerts stock 
         Route::get('/alerts', [AlertsController::class, 'getAlerts']);
         Route::put('/alerts/{alert}/read', [AlertsController::class, 'markAsRead']);
-        });
+    });
 });
-
