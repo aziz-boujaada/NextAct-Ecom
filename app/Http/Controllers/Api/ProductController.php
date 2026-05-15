@@ -2,18 +2,22 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\ProductsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Imports\ProductsImport;
 use App\Models\Product;
 use App\Services\AlertsService;
+use App\Services\CsvService;
 use App\Services\ProductImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly ProductImageService $productImageService)
+    public function __construct(private readonly ProductImageService $productImageService, private CsvService $csvService)
     {
         $this->middleware('permissions:view_products')->only(['index', 'show']);
 
@@ -29,13 +33,15 @@ class ProductController extends Controller
         $filters = $request->validate([
             'supplier_id' => ['sometimes', 'integer', 'exists:suppliers,id'],
         ]);
+        $products = Product::with(['category', 'supplier'])
+            ->when(isset($filters['supplier_id']), fn($query) => $query->where('supplier_id', $filters['supplier_id']))
+            ->latest()
+            ->get();
+
 
         return response()->json([
             'status' => 'success',
-            'products' => Product::with(['category', 'supplier'])
-                ->when(isset($filters['supplier_id']), fn($query) => $query->where('supplier_id', $filters['supplier_id']))
-                ->latest()
-                ->get(),
+            'products' => $products
         ]);
     }
 
@@ -123,4 +129,46 @@ class ProductController extends Controller
             'message' => 'Product deleted successfully',
         ]);
     }
+
+
+    /// export cvs/Exel method 
+    public function exportCsv(Request $request)
+    {
+        $products = Product::with([
+            'category',
+            'supplier'
+        ])
+            ->latest()
+            ->get();
+
+        return $this->csvService->exportCsv($products);
+    }
+
+    public function exportExel()
+    {
+        return Excel::download(
+            new ProductsExport,
+            'products.xlsx'
+        );
+    }
+
+    /// import csv 
+
+
+
+    public function import(Request $request)
+{
+    $request->validate([
+        'file' => 'required|file|mimes:xlsx,csv'
+    ]);
+
+    Excel::import(
+        new ProductsImport,
+        $request->file('file')
+    );
+
+    return response()->json([
+        'message' => 'Import done successfully'
+    ]);
+}
 }
