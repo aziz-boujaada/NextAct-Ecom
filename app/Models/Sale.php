@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sale extends Model
 {
-    protected $fillable = ['reference', 'client_id', 'total', 'status'];
+    protected $fillable = ['reference', 'client_id', 'subtotal', 'tax_amount', 'discount_amount', 'total', 'status'];
 
     protected $casts = [
+        'subtotal' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
     ];
 

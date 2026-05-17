@@ -4,22 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Invoice extends Model
+class PurchaseInvoice extends Model
 {
+    protected $table = 'purchase_invoices';
+
     protected $fillable = [
         'invoice_number',
-        'sale_id',
+        'purchase_id',
         'total',
     ];
 
     protected $casts = [
         'total' => 'decimal:2',
     ];
-
-    public function sale()
-    {
-        return $this->belongsTo(Sale::class);
-    }
 
     public function purchase()
     {
