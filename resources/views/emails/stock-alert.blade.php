@@ -1,33 +1,49 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Stock Alert</title>
 </head>
 
-<body style="margin:0; padding:0; background:#f6f8fb; font-family:Arial, sans-serif;">
+<body style="margin:0; padding:0; background:#f4f3ff; font-family:Arial, sans-serif;">
 
-    <div style="max-width:650px; margin:30px auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+    <div style="max-width:650px; margin:30px auto; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
 
-        <!-- HEADER -->
-        <div style="background:#1f2937; padding:20px; text-align:center;">
-            <h1 style="color:#ffffff; margin:0; font-size:22px;">
-                📦 NextAct ERP - Stock Alert
+        <!-- HEADER GRADIENT -->
+        <div style="
+        background: linear-gradient(135deg, #6d28d9, #a855f7, #ec4899);
+        padding:28px;
+        text-align:center;
+    ">
+            <h1 style="color:#fff; margin:0; font-size:22px; letter-spacing:0.5px;">
+                📦 NextAct ERP
             </h1>
+
+            <p style="color:#f3e8ff; margin:6px 0 0; font-size:14px;">
+                Smart Inventory Alert System
+            </p>
         </div>
 
         <!-- BODY -->
-        <div style="padding:25px;">
+        <div style="padding:28px;">
 
-            <p style="font-size:16px; color:#333;">
+            <p style="font-size:16px; color:#111;">
                 Hello <strong>Admin</strong>,
             </p>
 
-            <p style="font-size:15px; color:#555;">
-                A product has reached a critical stock level and requires your attention.
+            <p style="font-size:14px; color:#555; line-height:1.6;">
+                A product has reached a critical stock level and needs your attention immediately.
             </p>
 
-            <div style="margin:20px 0; padding:15px; border:1px solid #eee; border-radius:10px;">
+            <!-- CARD -->
+            <div style="
+            margin-top:20px;
+            padding:18px;
+            border-radius:12px;
+            background:#f9f5ff;
+            border:1px solid #e9d5ff;
+        ">
 
                 <p style="margin:6px 0;">
                     <strong>Product:</strong> {{ $product->name }}
@@ -35,7 +51,7 @@
 
                 <p style="margin:6px 0;">
                     <strong>Current Stock:</strong>
-                    <span style="color:#e11d48; font-weight:bold;">
+                    <span style="color:#dc2626; font-weight:bold;">
                         {{ $product->stock }}
                     </span>
                 </p>
@@ -49,34 +65,54 @@
                     <strong>Status:</strong>
 
                     @if($product->stock == 0)
-                        <span style="color:#dc2626; font-weight:bold;">OUT OF STOCK</span>
+                    <span style="color:#ef4444; font-weight:bold;">
+                        OUT OF STOCK
+                    </span>
                     @else
-                        <span style="color:#f59e0b; font-weight:bold;">LOW STOCK</span>
+                    <span style="color:#f59e0b; font-weight:bold;">
+                        LOW STOCK
+                    </span>
                     @endif
                 </p>
 
             </div>
 
-            <!-- CTA BUTTON -->
-            <div style="text-align:center; margin:25px 0;">
-                <a href="http://127.0.0.1:5173//products/{{ $product->id }}"
-                   style="background:#2563eb; color:#fff; padding:12px 20px; text-decoration:none; border-radius:8px; display:inline-block; font-weight:bold;">
+            <!-- CTA -->
+            <div style="text-align:center; margin:30px 0;">
+                <a href="http://127.0.0.1:5173/products/{{ $product->id }}"
+                    style="
+                    background: linear-gradient(135deg, #7c3aed, #a855f7);
+                    color:#fff;
+                    padding:12px 22px;
+                    text-decoration:none;
+                    border-radius:10px;
+                    display:inline-block;
+                    font-weight:bold;
+                    box-shadow:0 6px 15px rgba(124,58,237,0.3);
+               ">
                     View Product
                 </a>
             </div>
 
-            <p style="font-size:13px; color:#888; text-align:center;">
+            <p style="font-size:12px; color:#888; text-align:center;">
                 Please take action before it affects sales operations.
             </p>
 
         </div>
 
         <!-- FOOTER -->
-        <div style="background:#f1f5f9; padding:12px; text-align:center; font-size:12px; color:#777;">
+        <div style="
+        background:#f5f3ff;
+        padding:14px;
+        text-align:center;
+        font-size:12px;
+        color:#6b7280;
+    ">
             © {{ date('Y') }} NextAct ERP - All rights reserved
         </div>
 
     </div>
 
 </body>
+
 </html>
