@@ -19,6 +19,10 @@ class ReportsService
 
         $salesTotal = (float) Sale::query()->whereBetween('created_at', [$from, $to])->sum('total');
         $refundsTotal = (float) Refund::query()->whereBetween('created_at', [$from, $to])->sum('total');
+        $refundsTotalAll = (float) Refund::query()->sum('total');
+        $refundsToday = (float) Refund::query()->whereDate('created_at', now()->toDateString())->sum('total');
+        $refundsMonth = (float) Refund::query()->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total');
+        
         $confirmedPurchasesTotal = (float) Purchase::query()
             ->whereBetween('created_at', [$from, $to])
             ->where('status', 'confirmed')
@@ -44,14 +48,25 @@ class ReportsService
             ->where('status', 'pending')
             ->sum('total');
 
+        $netRevenue = $salesTotal - $refundsTotal;
+        $estimatedGrossProfit = $netRevenue - $confirmedPurchasesTotal;
+        $netProfit = $paymentsReceived - $refundsTotal - $confirmedPurchasesTotal;
+
         return [
             'period' => $this->periodPayload($from, $to),
+            'refunds_summary' => [
+                'refunds_total_all_time' => $this->money($refundsTotalAll),
+                'refunds_period' => $this->money($refundsTotal),
+                'refunds_today' => $this->money($refundsToday),
+                'refunds_month' => $this->money($refundsMonth),
+            ],
             'income_statement' => [
                 'revenue' => $this->money($salesTotal),
                 'refunds' => $this->money($refundsTotal),
-                'net_revenue' => $this->money($salesTotal - $refundsTotal),
+                'net_revenue' => $this->money($netRevenue),
                 'confirmed_purchases' => $this->money($confirmedPurchasesTotal),
-                'estimated_gross_profit' => $this->money($salesTotal - $refundsTotal - $confirmedPurchasesTotal),
+                'estimated_gross_profit' => $this->money($estimatedGrossProfit),
+                'net_profit' => $this->money($netProfit),
             ],
             'balance_sheet' => [
                 'assets' => [

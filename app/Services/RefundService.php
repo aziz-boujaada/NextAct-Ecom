@@ -67,7 +67,10 @@ class RefundService
                 'total' => $refund->items()->sum('total'),
             ]);
 
-            $this->saleService->refreshTotal($sale);
+            $this->saleService->refreshTotals($sale);
+            $sale->update([
+                'status' => 'refunded'
+            ]);
 
             return $refund->fresh(['sale.client', 'items.product']);
         });
@@ -133,7 +136,7 @@ class RefundService
                 'total' => $refund->items()->sum('total'),
             ]);
 
-            $this->saleService->refreshTotal($sale);
+            $this->saleService->refreshTotals($sale);
 
             return $refund->fresh(['sale.client', 'items.product']);
         });
@@ -150,7 +153,7 @@ class RefundService
             }
 
             $refund->delete();
-            $this->saleService->refreshTotal($sale);
+            $this->saleService->refreshTotals($sale);
         });
     }
 }
