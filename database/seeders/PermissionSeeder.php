@@ -26,6 +26,16 @@ class PermissionSeeder extends Seeder
             ['name' => 'edit_sales', 'description' => 'Edit sales'],
             ['name' => 'delete_sales', 'description' => 'Delete sales'],
 
+            // Devis permissions
+            ['name' => 'view_devis', 'description' => 'View devis'],
+            ['name' => 'create_devis', 'description' => 'Create new devis'],
+            ['name' => 'edit_devis', 'description' => 'Edit devis'],
+            ['name' => 'delete_devis', 'description' => 'Delete devis'],
+            ['name' => 'send_devis', 'description' => 'Send devis'],
+            ['name' => 'accept_devis', 'description' => 'Accept devis'],
+            ['name' => 'reject_devis', 'description' => 'Reject devis'],
+            ['name' => 'convert_devis', 'description' => 'Convert devis to sale'],
+
             // Purchase permissions
             ['name' => 'view_purchases', 'description' => 'View purchases'],
             ['name' => 'create_purchases', 'description' => 'Create new purchases'],
@@ -66,6 +76,12 @@ class PermissionSeeder extends Seeder
 
             // Dashboard permissions
             ['name' => 'view_dashboard', 'description' => 'View dashboard'],
+
+            // Reports permissions
+            ['name' => 'view_financial_reports', 'description' => 'View financial reports'],
+            ['name' => 'view_inventory_reports', 'description' => 'View inventory reports'],
+            ['name' => 'view_sales_reports', 'description' => 'View sales reports'],
+            ['name' => 'view_purchasing_reports', 'description' => 'View purchasing reports'],
 
             // User management permissions
             ['name' => 'view_users', 'description' => 'View users'],
