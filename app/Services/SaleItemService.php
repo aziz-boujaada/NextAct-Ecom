@@ -19,14 +19,14 @@ class SaleItemService
         return DB::transaction(function () use ($data) {
             $product = Product::findOrFail($data['product_id']);
 
-            $data['price'] = $product->price;
+            $data['price'] = $data['price'] ?? $product->price;
             $data['total'] = $data['price'] * $data['quantity'];
 
             $saleItem = SaleItem::create($data);
 
             $this->stockService->move($product, $saleItem->quantity, 'out', 'sale', $saleItem->id);
             $this->alertsService->stockAlert($product->fresh());
-            $this->saleService->refreshTotal($saleItem->sale);
+            $this->saleService->refreshTotals($saleItem->sale);
 
             return $saleItem->fresh(['sale.client', 'product']);
 
@@ -51,10 +51,10 @@ class SaleItemService
 
             $saleItem = $saleItem->fresh(['sale.client', 'product']);
 
-            $this->saleService->refreshTotal($oldSale);
+            $this->saleService->refreshTotals($oldSale);
 
             if ($oldSale->isNot($saleItem->sale)) {
-                $this->saleService->refreshTotal($saleItem->sale);
+                $this->saleService->refreshTotals($saleItem->sale);
             }
 
             $this->alertsService->stockAlert($oldProduct->fresh());
@@ -75,7 +75,7 @@ class SaleItemService
             $saleItem->delete();
 
             $this->stockService->move($product, $quantity, 'in', 'sale', $referenceId);
-            $this->saleService->refreshTotal($sale);
+            $this->saleService->refreshTotals($sale);
         });
     }
 

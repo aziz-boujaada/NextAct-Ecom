@@ -12,12 +12,17 @@ class SaleService
 
     public function create(array $data): Sale
     {
-        $reference = 'SALE-' . Str::random(6);
-        return DB::transaction(function () use ($data, $reference) {
+        return DB::transaction(function () use ($data) {
+            $reference = 'SALE-' . Str::random(6);
+
             $sale = Sale::create([
                 ...$data,
+                'reference' => $reference,
+                'subtotal' => 0,
+                'tax_rate' => $data['tax_rate'] ?? 0,
+                'tax_amount' => 0,
+                'discount_amount' => $data['discount_amount'] ?? 0,
                 'total' => 0,
-                'reference' => $reference
             ]);
 
             return $sale->fresh(['client', 'items.product', 'refunds.items.product']);
@@ -26,13 +31,14 @@ class SaleService
 
     public function update(Sale $sale, array $data): Sale
     {
-        unset($data['reference'], $data['total'], $data['items']);
+        unset($data['reference'], $data['subtotal'], $data['total'], $data['items']);
 
         $sale->update($data);
 
+        $this->refreshTotals($sale);
+
         return $sale->fresh(['client', 'items.product', 'refunds.items.product']);
     }
-
     public function delete(Sale $sale): void
     {
         DB::transaction(function () use ($sale) {
@@ -55,15 +61,21 @@ class SaleService
         });
     }
 
-    public function refreshTotal(Sale $sale): void
+    public function refreshTotals(Sale $sale): void
     {
-        $itemsTotal = $sale->items()->sum('total');
-        $refundsTotal = $sale->refunds()->sum('total');
+        $subtotal = (float) $sale->items()->sum('total');
+        $discountAmount = (float) $sale->discount_amount;
+        $taxRate = (float) $sale->tax_rate;
+
+        $net = max(0, $subtotal - $discountAmount);
+        $taxAmount = $net * $taxRate / 100;
+        $total = $net + $taxAmount;
 
         $sale->update([
-            'total' => max(0, $itemsTotal - $refundsTotal),
+            'subtotal' => $subtotal,
+            'tax_amount' => $taxAmount,
+            'total' => $total,
         ]);
     }
 
-  
 }

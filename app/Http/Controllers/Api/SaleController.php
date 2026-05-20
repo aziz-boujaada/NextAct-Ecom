@@ -9,7 +9,6 @@ use App\Models\Sale;
 use App\Services\SaleService;
 use App\Services\SaleItemService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class SaleController extends Controller
 {
@@ -40,16 +39,12 @@ class SaleController extends Controller
         $saleData = [
             'client_id' => $validated['client_id'],
             'status' => $validated['status'] ?? 'unpaid',
+            'tax_rate' => $validated['tax_rate'] ?? 0,
+            'discount_amount' => $validated['discount_amount'] ?? 0,
         ];
 
-        $reference = 'SALE-' . Str::random(6);
-
-        $sale = DB::transaction(function () use ($saleData, $items, $reference) {
-            $sale = Sale::create([
-                ...$saleData,
-                'total' => 0,
-                'reference' => $reference,
-            ]);
+        $sale = DB::transaction(function () use ($saleData, $items) {
+            $sale = $this->saleService->create($saleData);
 
             if (!empty($items)) {
                 foreach ($items as $itemData) {

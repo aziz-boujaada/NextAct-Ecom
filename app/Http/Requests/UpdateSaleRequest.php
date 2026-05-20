@@ -16,8 +16,11 @@ class UpdateSaleRequest extends FormRequest
     {
         return [
             'client_id' => ['sometimes', 'required', 'integer', 'exists:clients,id'],
+            'subtotal' => ['prohibited'],
             'total' => ['prohibited'],
             'status' => ['sometimes', 'required', 'string', Rule::in(['paid', 'unpaid', 'refunded'])],
+            'tax_rate' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'discount_amount' => ['sometimes', 'nullable', 'numeric', 'min:0'],
         ];
     }
 }
