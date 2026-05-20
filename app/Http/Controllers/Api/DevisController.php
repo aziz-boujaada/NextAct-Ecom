@@ -32,8 +32,8 @@ class DevisController extends Controller
             $query->where(function ($builder) use ($search) {
                 $builder->where('reference', 'like', "%{$search}%")
                     ->orWhere('notes', 'like', "%{$search}%")
-                    ->orWhereHas('client', fn ($client) => $client->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('items.product', fn ($product) => $product->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('client', fn($client) => $client->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('items.product', fn($product) => $product->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -45,7 +45,7 @@ class DevisController extends Controller
             $query->where('client_id', $clientId);
         }
 
-        $perPage = max(1, min(100, (int) $request->integer('per_page', 15)));
+        $perPage = max(1, min(100, (int) $request->integer('per_page', 10)));
         $devises = $query->latest()->paginate($perPage)->withQueryString();
 
         return response()->json([
@@ -90,8 +90,11 @@ class DevisController extends Controller
         ]);
     }
 
-    public function destroy(Devis $devis)
+    public function destroy($id)
     {
+
+        $devis = Devis::findOrFail($id);
+
         $this->devisService->delete($devis);
 
         return response()->json([
@@ -150,7 +153,7 @@ class DevisController extends Controller
     {
         $devis = $devis->load(['client', 'createdBy', 'items.product']);
 
-        $pdf = Pdf::loadView('devis.pdf', [
+        $pdf = Pdf::loadView('devis.deviPdf', [
             'devis' => $devis,
         ])->setPaper('a4');
 
@@ -164,7 +167,7 @@ class DevisController extends Controller
     {
         $steps = ['draft', 'sent', 'accepted', 'rejected', 'expired'];
 
-        return collect($steps)->map(fn ($status) => [
+        return collect($steps)->map(fn($status) => [
             'status' => $status,
             'label' => ucfirst($status),
             'active' => $devis->status === $status,

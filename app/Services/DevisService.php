@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Devis;
 use App\Models\Sale;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -60,7 +62,16 @@ class DevisService
 
     public function delete(Devis $devis): void
     {
-        $devis->delete();
+        logger()->info('Before delete', [
+            'id' => $devis->id,
+            'exists' => $devis->exists,
+        ]);
+
+        $result = $devis->delete();
+
+        logger()->info('After delete', [
+            'result' => $result,
+        ]);
     }
 
     public function send(Devis $devis): Devis
@@ -78,6 +89,18 @@ class DevisService
         return $this->transition($devis, 'expired', ['draft', 'sent']);
     }
 
+    public function autoExpired(int $id){
+      
+
+         $devis = Devis::findOrFail($id);
+
+         if($devis->expires_at && $devis->expires_at->isPast()){
+            $devis->update([
+                'status' => 'expired'
+            ]);
+         }
+    }
+
     public function acceptAndConvert(Devis $devis): array
     {
         return DB::transaction(function () use ($devis) {
@@ -86,10 +109,8 @@ class DevisService
             $sale = $this->saleService->create([
                 'client_id' => $devis->client_id,
                 'status' => 'unpaid',
-                'subtotal' => $devis->subtotal,
-                'tax_amount' => $devis->tax,
+                'tax_rate' => $devis->tax,
                 'discount_amount' => $devis->discount,
-                'total' => $devis->total,
             ]);
 
             $devis->loadMissing(['items.product']);
@@ -113,12 +134,16 @@ class DevisService
     public function refreshTotals(Devis $devis): void
     {
         $subtotal = (float) $devis->items()->sum('total');
-        $discount = (float) ($devis->discount ?? 0);
-        $tax = (float) ($devis->tax ?? 0);
+        $discount = (float) $devis->discount;
+        $taxRate = (float) $devis->tax;
+
+        $net = max(0, $subtotal - $discount);
+        $tax = $net * $taxRate / 100;
+        $total = $net + $tax;
 
         $devis->update([
             'subtotal' => $subtotal,
-            'total' => max(0, $subtotal - $discount + $tax),
+            'total' => $total,
         ]);
     }
 

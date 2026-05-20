@@ -23,7 +23,7 @@ class UpdateDevisRequest extends FormRequest
             'status' => ['sometimes', 'string', Rule::in(['draft', 'sent', 'rejected', 'expired'])],
             'discount' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'tax' => ['sometimes', 'nullable', 'numeric', 'min:0'],
-            'expires_at' => ['sometimes', 'nullable', 'date'],
+            'expires_at' => ['sometimes', 'nullable', 'date', 'after_or_equal:now'],
             'notes' => ['sometimes', 'nullable', 'string'],
             'items' => ['sometimes', 'array'],
             'items.*.product_id' => ['required_with:items', 'integer', 'exists:products,id'],

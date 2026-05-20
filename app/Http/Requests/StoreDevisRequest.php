@@ -23,7 +23,7 @@ class StoreDevisRequest extends FormRequest
             'status' => ['sometimes', 'string', Rule::in(['draft', 'sent', 'rejected', 'expired'])],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'tax' => ['nullable', 'numeric', 'min:0'],
-            'expires_at' => ['nullable', 'date'],
+            'expires_at' => ['nullable', 'date' , 'after_or_equal:now'],
             'notes' => ['nullable', 'string'],
             'items' => ['nullable', 'array'],
             'items.*.product_id' => ['required_with:items', 'integer', 'exists:products,id'],
