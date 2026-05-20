@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Client;
+use App\Models\Devis;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Refund;
@@ -48,6 +49,7 @@ class DashboardService
                 'purchases_total' => $this->money(Purchase::query()->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total')),
             ],
             'sales_by_status' => $this->countByStatus(Sale::class, ['paid', 'unpaid', 'refunded']),
+            'devis_by_status' => $this->countByStatus(Devis::class, ['draft', 'sent', 'accepted', 'rejected', 'expired']),
             'purchases_by_status' => $this->countByStatus(Purchase::class, ['pending', 'confirmed']),
             'top_selling_products' => $this->topSellingProducts(),
             'low_stock_products' => $this->lowStockProducts(),
