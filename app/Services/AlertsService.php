@@ -7,6 +7,7 @@ use App\Mail\StockAlertMail;
 use App\Models\Alert;
 use App\Models\Product;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Mail;
 
 class AlertsService
@@ -22,13 +23,13 @@ class AlertsService
             return;
         }
 
-        $acive = Alert::where('product_id', $product->id)
+        $active = Alert::where('product_id', $product->id)
             ->where('status', 'active')
             ->exists();
-
+        $alert = null;
         if ($product->stock <= $product->alert_stock) {
 
-            if (!$acive) {
+            if (!$active) {
 
                 $alert = Alert::create([
                     'product_id' => $product->id,
@@ -40,12 +41,14 @@ class AlertsService
             }
 
             $this->sendEmailToAdmins($product);
+            if ($alert) {
+                $alert->users()->attach(
+                    $this->getAdminsIDs()->mapWithKeys(fn($id) => [
+                        $id => ['is_read' => false]
+                    ])->toArray()
+                );
+            }
 
-            $alert->users()->attach(
-                $this->getAdminsIDs()->mapWithKeys(fn($id) => [
-                    $id => ['is_read' => false]
-                ])->toArray()
-            );
 
 
 
@@ -75,7 +78,7 @@ class AlertsService
      * and stock alert method that create alert when product hase low stock 
      **/
 
-    public function handle(Product $product)
+    public function handle($product)
     {
 
         $product = $product->fresh();

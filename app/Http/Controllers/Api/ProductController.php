@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Imports\ProductsImport;
+use App\Models\Category;
 use App\Models\Product;
 use App\Services\AlertsService;
 use App\Services\CsvService;
@@ -17,7 +18,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly ProductImageService $productImageService, private CsvService $csvService)
+    public function __construct(private readonly ProductImageService $productImageService, private AlertsService $alertsService, private CsvService $csvService)
     {
         $this->middleware('permissions:view_products')->only(['index', 'show']);
 
@@ -48,8 +49,8 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         $data = $request->validated();
-
-        $data['reference'] = 'Ref-' . Str::uuid();
+        $category = Category::findOrFail($data['category_id']);
+        $data['reference'] = substr(strtoupper($category->name), 0, 4) . '-' . Str::random(8);
 
         if ($request->hasFile('image')) {
             $data['image_path'] = $this->productImageService
@@ -73,6 +74,10 @@ class ProductController extends Controller
         $product = Product::create($data)
             ->load(['category', 'supplier']);
 
+        if ($product->stock <= $product->alert_stock) {
+            $this->alertsService->handle($product);
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Product created successfully',
@@ -88,7 +93,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(UpdateProductRequest $request, Product $product, AlertsService $alertsService)
+    public function update(UpdateProductRequest $request, Product $product)
     {
         $data = $request->validated();
 
@@ -107,9 +112,10 @@ class ProductController extends Controller
 
         $product = $product->fresh();
 
-        if ($product->stock != $oldStock) {
-            $alertsService->stockAlert($product);
+        if ($product->stock != $oldStock || $product->stock <= $product->alert_stock) {
+            $this->alertsService->handle($product);
         }
+         
 
         return response()->json([
             'status' => 'success',
@@ -157,18 +163,18 @@ class ProductController extends Controller
 
 
     public function import(Request $request)
-{
-    $request->validate([
-        'file' => 'required|file|mimes:xlsx,csv'
-    ]);
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv'
+        ]);
 
-    Excel::import(
-        new ProductsImport,
-        $request->file('file')
-    );
+        Excel::import(
+            new ProductsImport,
+            $request->file('file')
+        );
 
-    return response()->json([
-        'message' => 'Import done successfully'
-    ]);
-}
+        return response()->json([
+            'message' => 'Import done successfully'
+        ]);
+    }
 }
