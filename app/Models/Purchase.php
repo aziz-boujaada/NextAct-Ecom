@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Purchase extends Model
 {
@@ -21,5 +22,11 @@ class Purchase extends Model
     public function invoice()
     {
         return $this->hasOne(PurchaseInvoice::class);
+    }
+
+
+    public function paymentAllocations():MorphMany
+    {
+        return $this->morphMany(PaymentAllocation::class , 'payable');
     }
 }

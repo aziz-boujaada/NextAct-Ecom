@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Sale extends Model
 {
@@ -36,8 +37,8 @@ class Sale extends Model
         return $this->hasMany(Refund::class);
     }
 
-    public function payments()
+    public function paymentAllocations():MorphMany
     {
-        return $this->hasMany(Payment::class);
+        return $this->morphMany(PaymentAllocation::class , 'payable');
     }
 }

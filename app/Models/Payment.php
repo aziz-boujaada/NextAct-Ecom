@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payment extends Model
 {
@@ -19,8 +20,8 @@ class Payment extends Model
         'paid_at' => 'date',
     ];
 
-    public function sale()
+    public function allocations():HasMany
     {
-        return $this->belongsTo(Sale::class);
+        return $this->hasMany(PaymentAllocation::class);
     }
 }
