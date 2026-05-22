@@ -15,18 +15,16 @@ class DashboardService
 {
     public function stats(): array
     {
-        $grossSales = Sale::query()->sum('total') + Refund::query()->sum('total');
         $totalRefunds = Refund::query()->sum('total');
         $netSales = Sale::query()->sum('total');
         $totalPurchases = Purchase::query()->sum('total');
 
         return [
             'summary' => [
-                'gross_sales' => $this->money($grossSales),
                 'total_refunds' => $this->money($totalRefunds),
-                'net_sales' => $this->money($netSales),
+                'net_sales' => $this->money($netSales - $totalRefunds),
                 'total_purchases' => $this->money($totalPurchases),
-                'estimated_profit' => $this->money($netSales - $totalPurchases),
+                'estimated_profit' => $this->money($netSales - $totalPurchases - $totalRefunds),
             ],
             'counts' => [
                 'sales' => Sale::query()->count(),
@@ -35,7 +33,7 @@ class DashboardService
                 'products' => Product::query()->count(),
                 'clients' => Client::query()->count(),
                 'suppliers' => Supplier::query()->count(),
-                'low_stock_products' => Product::query()->whereColumn('stock', '<=', 'min_stock')->count(),
+                'low_stock_products' => Product::query()->whereColumn('stock', '<=', 'alert_stock')->count(),
             ],
             'today' => [
                 'sales' => Sale::query()->whereDate('created_at', today())->count(),
@@ -98,8 +96,8 @@ class DashboardService
     private function lowStockProducts(): array
     {
         return Product::query()
-            ->select('id', 'reference', 'name', 'stock', 'min_stock')
-            ->whereColumn('stock', '<=', 'min_stock')
+            ->select('id', 'reference', 'name', 'stock', 'alert_stock')
+            ->whereColumn('stock', '<=', 'alert_stock')
             ->orderBy('stock')
             ->limit(5)
             ->get()

@@ -124,7 +124,7 @@ class ReportsService
 
         $lowStockProducts = Product::query()
             ->select('id', 'reference', 'name', 'stock', 'min_stock', 'alert_stock')
-            ->whereColumn('stock', '<=', 'min_stock')
+            ->whereColumn('stock', '<=', 'alert_stock')
             ->orderBy('stock')
             ->limit(10)
             ->get()

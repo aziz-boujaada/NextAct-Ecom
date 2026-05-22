@@ -10,11 +10,14 @@ class SaleItem extends Model
 
     protected $fillable = [
         'sale_id', 'product_id', 'price', 'quantity', 'total',
+        'refund_quantity', 'refund_total', 'refund_status',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'total' => 'decimal:2',
+        'refund_total' => 'decimal:2',
+        'refund_status' => 'string',
     ];
 
     public function sale()
