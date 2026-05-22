@@ -17,8 +17,7 @@ return new class extends Migration
             $table->string('type'); 
             $table->integer('stock');
             $table->integer('alert_stock');
-
-            $table->boolean('is_read')->default(false);
+           
 
             $table->timestamps();
         });

@@ -36,6 +36,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'reject_devis', 'description' => 'Reject devis'],
             ['name' => 'convert_devis', 'description' => 'Convert devis to sale'],
 
+            // Devis reports permissions
+            ['name' => 'view_devis_reports', 'description' => 'View devis reports'],
+
             // Purchase permissions
             ['name' => 'view_purchases', 'description' => 'View purchases'],
             ['name' => 'create_purchases', 'description' => 'Create new purchases'],
@@ -82,6 +85,11 @@ class PermissionSeeder extends Seeder
             ['name' => 'view_inventory_reports', 'description' => 'View inventory reports'],
             ['name' => 'view_sales_reports', 'description' => 'View sales reports'],
             ['name' => 'view_purchasing_reports', 'description' => 'View purchasing reports'],
+
+            // AI Agent permissions
+            ['name' => 'view_ai_agent', 'description' => 'View AI agent'],
+            ['name' => 'use_ai_agent', 'description' => 'Use AI agent'],
+            ['name' => 'manage_ai_agent', 'description' => 'Manage AI agent'],
 
             // User management permissions
             ['name' => 'view_users', 'description' => 'View users'],

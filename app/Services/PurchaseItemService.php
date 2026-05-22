@@ -24,24 +24,24 @@ class PurchaseItemService
 
         return $product;
     }
-    
+
     public function applyStockMovement(Product $product, int $quantity, string $type, int $purchaseItemId): void
     {
         $product = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+        
+            if ($type === 'in') {
+                $product->increment('stock', $quantity);
+            } else {
+                $product->decrement('stock', $quantity);
+            }
 
-        if ($type === 'in') {
-            $product->increment('stock', $quantity);
-        } else {
-            $product->decrement('stock', $quantity);
-        }
-
-        StockMovement::create([
-            'product_id' => $product->id,
-            'quantity' => $quantity,
-            'type' => $type,
-            'source' => 'purchase',
-            'reference_id' => $purchaseItemId,
-        ]);
+            StockMovement::create([
+                'product_id' => $product->id,
+                'quantity' => $quantity,
+                'type' => $type,
+                'source' => 'purchase',
+                'reference_id' => $purchaseItemId,
+            ]); 
     }
 
     public function refreshPurchaseTotal(Purchase $purchase): void

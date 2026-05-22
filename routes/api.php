@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\StockmovmentController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\CompanySettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
@@ -30,6 +31,13 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('auth.profile.update');
     Route::put('/password', [AuthController::class, 'resetPassword'])->name('auth.password.reset');
     Route::post('/refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
+
+    // Company Settings Routes
+    Route::prefix('settings')->group(function () {
+        Route::get('/company', [CompanySettingsController::class, 'show'])->name('settings.company.show');
+        Route::put('/company', [CompanySettingsController::class, 'update'])->name('settings.company.update');
+        Route::post('/company/logo/delete', [CompanySettingsController::class, 'deleteLogo'])->name('settings.company.logo.delete');
+    });
 
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
