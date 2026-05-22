@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Mail\PaymentMethodEmail;
+use App\Models\Client;
 use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class SaleService
@@ -24,6 +27,8 @@ class SaleService
                 'discount_amount' => $data['discount_amount'] ?? 0,
                 'total' => 0,
             ]);
+            // send email to client with data of sale to choice payment method 
+            $this->choicePaymentMethod($sale);
 
             return $sale->fresh(['client', 'items.product', 'refunds.items.product']);
         });
@@ -36,6 +41,9 @@ class SaleService
         $sale->update($data);
 
         $this->refreshTotals($sale);
+
+        // send email to client with data of sale to choice payment method 
+        $this->choicePaymentMethod($sale);
 
         return $sale->fresh(['client', 'items.product', 'refunds.items.product']);
     }
@@ -78,4 +86,11 @@ class SaleService
         ]);
     }
 
+
+    public function choicePaymentMethod(Sale $sale)
+    {
+
+        $client = Client::findOrFail($sale->client_id);
+        Mail::to($client->email)->queue(new PaymentMethodEmail($sale, $client));
+    }
 }
