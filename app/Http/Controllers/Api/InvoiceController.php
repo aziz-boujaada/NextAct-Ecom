@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CompanySetting;
 use App\Models\Invoice;
 use App\Models\Sale;
 use App\Models\Purchase;
@@ -19,6 +20,7 @@ class InvoiceController extends Controller
   public function generateInvoice($id)
   {
     $sale = Sale::with(['client', 'items.product', 'invoice'])->findOrFail($id);
+    $companyInfo = CompanySetting::first();
 
     $invoice = Invoice::updateOrCreate(
       ['sale_id' => $sale->id],
@@ -33,6 +35,7 @@ class InvoiceController extends Controller
     $pdf = Pdf::loadView('invoices.invoice', [
       'sale' => $sale,
       'invoice' => $invoice,
+      'companyInfo' => $companyInfo,
     ])->setPaper('a4');
 
     return response($pdf->output(), 200, [
